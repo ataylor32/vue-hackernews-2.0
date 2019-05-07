@@ -1,5 +1,32 @@
 <template>
   <div class="item-view" v-if="item">
+    <div>
+      <label for="image">Cropper test</label>
+      <input
+        id="image"
+        type="file"
+        accept="image/gif, image/jpeg, image/png"
+        @change="setImageNonCropped"
+      >
+
+      <template v-if="imageNonCropped">
+        <vue-cropper
+          ref="cropper"
+          :view-mode="2"
+          :aspect-ratio="1"
+          :guides="false"
+          :background="false"
+          :auto-crop-area="0.5"
+          :zoomable="false"
+          :src="imageNonCropped"
+          preview="#image-preview"
+        />
+
+        <p>Preview:</p>
+
+        <div id="image-preview" style="width: 128px; height: 128px; border: 1px solid #000; overflow: hidden;" />
+      </template>
+    </div>
     <template v-if="item">
       <div class="item-view-header">
         <a :href="item.url" target="_blank">
@@ -28,14 +55,16 @@
 </template>
 
 <script>
+import VueCropper from 'vue-cropperjs'
 import Spinner from '../components/Spinner.vue'
 import Comment from '../components/Comment.vue'
 
 export default {
   name: 'item-view',
-  components: { Spinner, Comment },
+  components: { VueCropper, Spinner, Comment },
 
   data: () => ({
+    imageNonCropped: '',
     loading: true
   }),
 
@@ -67,6 +96,19 @@ export default {
   },
 
   methods: {
+    setImageNonCropped(e) {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        this.imageNonCropped = event.target.result;
+
+        this.$nextTick(() => {
+          this.$refs.cropper.replace(event.target.result);
+        });
+      };
+
+      reader.readAsDataURL(e.target.files[0]);
+    },
     fetchComments () {
       if (!this.item || !this.item.kids) {
         return
